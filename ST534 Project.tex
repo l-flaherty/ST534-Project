@@ -1,0 +1,482 @@
+\documentclass[12pt, letterpaper]{article}
+\usepackage[left=2.5cm,right=2.5cm, top=2.5cm, bottom=2.5cm]{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead[R]{Flaherty, \thepage}
+\renewcommand{\headrulewidth}{2pt}
+\setlength{\headheight}{15pt}
+\usepackage{lipsum}
+\usepackage{amsmath}
+\usepackage[makeroom]{cancel}
+\usepackage{cancel}
+\usepackage{array,polynom}
+\newcolumntype{C}{>{{}}c<{{}}} % for '+' and '-' symbols
+\newcolumntype{R}{>{\displaystyle}r} % automatic display-style math mode 
+\usepackage{xcolor}
+\newcommand\Ccancel[2][black]{\renewcommand\CancelColor{\color{#1}}\cancel{#2}}
+% Define a custom environment for examples with an indent
+
+\newenvironment{ex}{
+	\par\smallskip % Add some vertical space before the example
+	\noindent\textit{Example:\hspace{-0.25em}}
+	\leftskip=0.5em % Set the left indent to 1em (adjust as needed)
+}{
+	\par\smallskip % Add some vertical space after the example
+	\leftskip=0em % Reset the left indent
+}
+
+\newenvironment{nonex}{
+	\par\smallskip % Add some vertical space before the example
+	\noindent\textit{Non-example:\hspace{-0.25em}}
+	\leftskip=0.5em % Set the left indent to 1em (adjust as needed)
+}{
+	\par\smallskip % Add some vertical space after the example
+	\leftskip=0em % Reset the left indent
+}
+\newcommand{\mymatrix}[1]{
+	\renewcommand{\arraystretch}{0.5} % Adjust vertical spacing%
+	\setlength\arraycolsep{3pt}       % Adjust horizontal spacing%
+	\scalebox{0.90}{                  % Change font size%
+		$\begin{bmatrix}
+			#1
+		\end{bmatrix}$
+	}                   
+	\renewcommand{\arraystretch}{1.0} % Reset vertical spacing
+	\setlength\arraycolsep{6pt}       %Adjust horizontal spacing%
+}
+
+\usepackage{amssymb}
+\usepackage{bbm}
+\usepackage{mathrsfs}
+\usepackage[toc]{glossaries}
+\usepackage{amsthm}
+\usepackage{indentfirst}
+\usepackage[utf8]{inputenc}
+\usepackage[thinc]{esdiff}
+\usepackage{graphicx}
+\graphicspath{{./images/}}
+\usepackage{subfig}
+\usepackage{chngcntr}
+\usepackage{placeins}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{comment}
+\usepackage{sectsty}
+\sectionfont{\fontsize{15}{15}\selectfont}
+\usepackage{subcaption}
+\setlength\abovedisplayskip{0pt}
+\usepackage[hidelinks]{hyperref}
+\usepackage[nottoc,numbib]{tocbibind}
+\renewcommand{\qedsymbol}{\rule{0.7em}{0.7em}}
+\newcommand{\Mod}[1]{\ (\mathrm{mod}\ #1)}
+\counterwithin{figure}{section}
+\usepackage{centernot}
+\usepackage{enumitem}
+\theoremstyle{definition}
+\newtheorem{exmp}{Example}
+\newtheorem{nonexmp}{Non-Example}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{lemma}{Lemma}[theorem]
+\numberwithin{equation}{section}
+\newcommand{\mydef}[1]{(Definition \ref{#1}, Page \pageref{#1})}
+\newcommand{\mytheorem}[1]{(Theorem \ref{#1}, Page \pageref{#1})}
+\newcommand{\mylemma}[1]{(Lemma \ref{#1}, Page \pageref{#1})}
+\newcommand{\clickableword}[2]{\hyperref[#1]{#2}}
+
+%underscript for operations%
+\newcommand{\+}[1]{+_{\scalebox{.375}{#1}}}
+\newcommand{\mult}[1]{\cdot_{\scalebox{.375}{#1}}}
+
+%blackboard for letters%
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\V}{\mathbb{V}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\K}{\mathbb{K}}
+\newcommand{\1}{\mathbbm{1}}
+\newcommand{\Prob}{\mathbb{P}}
+
+\title{Time Series Project}
+\author{Liam Flaherty, Zhao Qu, and Zhijiang Yang}
+\date{\parbox{\linewidth}{\centering%
+		Professor Martin\endgraf\bigskip
+		NCSU: ST534-001\endgraf\bigskip
+		October 14, 2024 \endgraf}}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\newpage\clearpage\noindent
+\tableofcontents
+
+\newpage
+\section{Introduction}
+\label{section.intro}
+
+In 2022, I had a small surgery on my back that kept me pretty immobile for months on end. Once I was able to start moving normally again, my strength and endurance were both fractions of what they were prior to undergoing the procedure.
+\vspace{\baselineskip}
+
+To build back my health, I started running and lifting weights. Progress could be judged by direct measurement (e.g. how far I could run or how much weight I could lift), but hopefully, changes in these direct measurements would also manifest themselves in proxy measurements (e.g. an increase in strength would lead to an increase in muscle mass and thus body weight, while an increase in endurance would lead to better cardiovascular health).
+\vspace{\baselineskip} 
+
+To that end, I made it a goal to increase my body weight at a constraint of a steady resting heart rate. With a few exceptions, I recorded progress in these areas each morning from August 2022 to March 2023 by using a blood pressure and heart rate gauge I bought from CVS and a bathroom scale. We reserve the data post February 2023 as the test set, and plot the training set in Figures \ref{EvolutionOfHR}-\ref{EvolutionOfWeight} below.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=10cm]{Evolution Of HR}
+	\caption{Evolution Of Heart Rate}
+	\label{EvolutionOfHR}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=10cm]{Evolution Of Weight}
+	\caption{Evolution Of Weight}
+	\label{EvolutionOfWeight}
+\end{figure}
+
+
+
+
+
+
+\newpage
+\section{Model Selection}
+\label{section.selection}
+
+\subsection{White Noise Test}
+\label{subsection.whitenoise}
+It is clear from inspection that the time series for weight is not white noise. We use the Ljung-Box Q Test to determine whether we need to fit a model for the heart rate data. The function \texttt{Box.test()} in R provides a nice way to look at this. Upon running this function on our data, we get the below output in Figure \ref{fig.ljungbox}. With a p-value of about 0.004, we reject the null hypothesis of ``white noise" under a significance level of $\alpha=0.05$.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=8cm]{LBQ}
+	\caption{R Output For Ljung-Box Q Test}
+	\label{fig.ljungbox}
+\end{figure} 
+
+
+\subsection{(Weak) Stationarity Test}
+\label{subsection.stationary}
+We can test whether or not we need to take a difference in either dataset in order to make the data stationary (test if there is a unit root) with the Augmented Dickey-Fuller Test. At least visually, it appears there is trending in the weight dataset, but constant mean in the heart rate dataset. This is borne out by a formal test of the data, which we show in Figures \ref{fig.weightadf}-\ref{fig.hradf} below. Note that there is not enough evidence to reject the null hypothesis of ``non-stationary" for the weight data under a significance level of $\alpha=0.05$.
+
+\begin{figure}[H]
+	\begin{minipage}[b]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{ADF Weight}
+		\caption{ADF Output For Weight}
+		\label{fig.weightadf}
+	\end{minipage}
+		\hfill
+	\begin{minipage}[b]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{ADF HR}
+		\caption{ADF Output For Heart Rate}
+		\label{fig.hradf}
+\end{minipage}
+\end{figure} 
+
+Indeed, after taking a difference (Figure \ref{fig.after}), we see the time series appears significantly more stationary than previously (Figure \ref{EvolutionOfWeight}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=8cm]{Evolution Of Weight Diff}
+	\caption{Time Series After Difference}
+	\label{fig.after}
+\end{figure}
+
+
+
+
+\subsection{Autocorrelation And Partial Autocorrelation Functions}
+\label{subsection.acf}
+
+The autocorrelation and partial autocorrelation for our heart rate data (Figure \ref{fig.adfhr}) and weight data (Figure \ref{fig.adfweight}) are shown below.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=10cm]{ACF HR}
+	\caption{ACF And PACF For Heart Rate}
+	\label{fig.adfhr}
+\end{figure}
+\vspace{-0.75cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=10cm]{ACF Weight}
+	\caption{ACF And PACF For Weight}
+	\label{fig.adfweight}
+\end{figure}
+
+As expected, the ACF for the weight data refuses to die out; the data is heavily correlated. After taking a difference, we see the P/ACF plots in Figure \ref{fig.acfweightdiff} below.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=9.5cm]{ACF Weight Diff}
+	\caption{ACF And PACF For Differenced Data}
+	\label{fig.acfweightdiff}
+\end{figure}
+
+
+\subsection{Seasonality}
+\label{subsection.seasonality}
+
+Notice that the ACF for the differenced data in Figure \ref{fig.acfweightdiff} above has spikes at lags of 7, 14, and 21 (the seasonal lags are highlighted in green). This indicates that we might try fitting a seasonal component to the data. There is a physical explanation for this seasonality as well-- I didn't run on Sunday's and often ate out on the weekend.
+\vspace{\baselineskip}
+
+To account for this seasonality, we can try to fit a SARIMA with $s=7$. Since the spikes in the ACF are not growing, we may not need to take a seasonal difference. Nevertheless, we try taking one and see how the P/ACF plots look. They are shown in Figure \ref{fig.sdiffacf} below.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm]{ACF Weight SDiff}
+	\caption{ACF And PACF Of Seasonally Differenced Weight Data}
+	\label{fig.sdiffacf}
+\end{figure}
+
+There are still some large spikes in the PACF well out into the data, so taking just a seasonal difference may not be sufficient. When taking both a seasonal difference ($D=1$) and then a regular difference ($d=1$), we get the plots for our P/ACF in Figure \ref{fig.bothacf}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm]{ACF Weight SDiff And Diff}
+	\caption{ACF And PACF Of Seasonally And Regularly Differenced Weight}
+	\label{fig.bothacf}
+\end{figure}
+
+
+\subsection{Suggested Models}
+\label{subsection.suggestedmodels}
+
+From Subsection \ref{subsection.seasonality}, there is no clear answer as to which differencing combination (the $d$ and $D$ terms) is best to deal with the weight data.
+\vspace{\baselineskip}
+
+Based on the ACF and PACF from the regularly differenced data ($d=1$) from Figure \ref{fig.acfweightdiff}, we see the seasonal lags of the ACF gradually die out, while the seasonal lags of the PACF have a spike at lag 2 (so, an ARIMA(2,0,0) or ARIMA(2,0,3) for the seasonal component might make sense). The regular lags in the ACF do not completely die out with spikes well out into the series, though the last large spike is at lag 1. The regular lags in the PACF gradually die out, despite having a large spike at lag 6 (so, an ARIMA(0,1,1) for the regular component might make sense). This first bit of our recommended models are ARIMA(0,1,1)(2,0,0)7 and ARIMA(0,1,1)(2,0,3)7.
+\vspace{\baselineskip}
+
+Based on the ACF and PACF from the seasonally differenced data ($D=1$) from Figure \ref{fig.sdiffacf}, we see the seasonal lags in the ACF die out after a large first spike, while the seasonal lags of the PACF immediately dissipate (so, an ARIMA(0,1,1) or ARIMA(0,1,0) for the seasonal component might make sense). The regular lags in the ACF have meaningful spikes at lags 1 and 2 before having a sinusoidal decay. The regular lags in the PACF do not really die off (so, an ARIMA(0,0,1) or ARIMA(0,0,2) or ARIMA(0,0,3) for the regular component might make sense). The second bit of our recommended models are ARIMA(0,0,1)(0,1,1)7, ARIMA(0,0,1)(0,1,0)7, ARIMA(0,0,2)(0,1,1)7, and ARIMA(0,0,2)(0,1,0)7.
+\vspace{\baselineskip}
+
+Based on the ACF and PACF from the data that is both seasonally differenced and regularly differenced ($d=1, D=1$), we see one large spike in the seasonal lag of the ACF and one large spike in the seasonal lag of the PACF (so, an ARIMA(1,1,0) or ARIMA(0,1,1) or ARIMA(1,1,1) for the seasonal component might make sense). The regular lags in the ACF and PACF do not really die off, but maybe an ARIMA(1,1,0) or ARIMA(0,1,1) or ARIMA(1,1,1) could work. The third and final bit of our recommended models are 
+ARIMA(1,1,1)(1,1,0)7, ARIMA(1,1,1)(0,1,1)7, ARIMA(1,1,1)(1,1,1)7, ARIMA(0,1,1)(1,1,0)7, ARIMA(0,1,1)(0,1,1)7, ARIMA(0,1,1)(1,1,1)7,
+ARIMA(1,1,0)(1,1,0)7, ARIMA(1,1,0)(0,1,1)7, and ARIMA(1,1,0)(1,1,1)7.
+\vspace{\baselineskip}
+
+
+The heart rate data is much simpler. Based on the ACF and PACF for the Heart Rate Data in Figure \ref{fig.adfhr}, we suggest an AR(1). This is because the last large spike in the ACF and PACF are both at lag one, and the ACF does not completely die off.
+\vspace{\baselineskip}
+
+
+\newpage
+\subsection{Model Diagnostics}
+\label{subsection.diagnostics}
+
+We prioritize the models we identified in subsection \ref{subsection.suggestedmodels}, but we also have lots of computational power to try many different models.
+\vspace{\baselineskip}
+
+We utilize this power by trying all seasonal ARIMA models with $p, q, P, \text{ and } Q$ terms less than 5 and $d \text{ and } D$ terms less than 2. For each of the $5^4\times2\times 2=2500$ models, we compute the AIC and BIC for model evaluation, and the p-value from the Ljung-Box Q test to see if the residuals from our model are actually white noise. The top 15 models in terms of BIC are shown in Figure \ref{Model Fit} below. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=7cm]{Weight Diagnostics}
+	\caption{ARIMA Model Diagnostics}
+	\label{Model Fit}
+\end{figure}
+
+See that our recommended ARIMA(0,1,1)(0,1,1) had the best BIC. Also notice that all the top models had both a seasonal and regular difference. We finally note that in terms of AIC, the ARIMA(0,1,1)(0,1,1) was also a top performer, and only models with much more terms (e.g. ARIMA(2,1,1)(1,1,4)7), bested it by that metric. Since we are using the models for prediction, we prefer parsimony and so base our decision on the metric that is less forgiving to added parameters; our model choice is the ARIMA(0,1,1)(0,1,1)7.
+\vspace{\baselineskip}
+
+The heart rate data was stationary to begin with; we only need to consider ARMA models. The top model in terms of BIC (of all combinations of $p \text{ and } q$ less than 5) was our suggested AR(1). The top ten models are shown in Figure \ref{Model Fit Weight} below.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=7cm]{HR Diagnostics}
+	\caption{ARIMA Model Diagnostics}
+	\label{Model Fit Weight}
+\end{figure}
+
+
+\newpage
+\section{Parameter Selection}
+\label{section.parameterselection}
+\subsection{Heart Rate Data}
+\label{subsection.hr}
+
+We fit both series with two models each using the \texttt{forecast} package from R. In choosing the coefficients, we are selecting those parameter values which minimize the conditional least squares.
+\vspace{\baselineskip}
+
+For the heart rate data, the top performing model was our suggested AR(1). Our model is (where $a_t \sim N(0, 20.16)$):
+
+\vspace{-0.5cm}
+\begin{align}
+	a_t&=\pi(B)\widetilde{Z_t}\\
+	a_t&\approx(1-0.3086B)(Z_t-55.3846)\\
+	Z_t&\approx55.3846+0.3086(Z_{t-1}-55.3846)+a_t
+\end{align}
+
+\vspace{-0.5cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm]{HR AR1 Model}
+	\caption{R Code For Heart Rate Model Coefficients}
+	\label{HR AR1}
+\end{figure}
+
+The second best model was an MA(1). The model fit is (where $a_t \sim N(0,20.34)$):
+
+\vspace{-0.5cm}
+\begin{align}
+	\widetilde{Z_t}&=\psi(B)a_t\\
+	(Z_t-55.3846)&\approx(1+0.2283B)a_t\\
+	Z_t&\approx55.3846+a_t+0.2283a_{t-1}
+\end{align}
+
+\vspace{-0.5cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm]{HR MA1 Model}
+	\caption{R Code For Heart Rate Model Coefficients}
+	\label{HR MA1}
+\end{figure}
+
+
+
+
+\newpage
+\subsection{Weight Data}
+\label{subsection.weight}
+
+We give the coefficients to the Seasonal ARIMA models that we fit for the weight data below. The best model in terms of BIC was our suggested SARIMA(0,1,1)(0,1,1). Our model is (where $a_t \sim N(0, 1.268)$):
+
+\vspace{-0.5cm}
+\begin{align}
+	\pi(B)\Pi(B^s)(1-B)^d(1-B^s)^DZ_t=\psi(B)\Psi(B^s)a_t\\
+	(1-B)(1-B^7)Z_t\approx(1-0.6659B)(1-0.8147B^7)a_t\\
+	Zt\approx Z_{t-1}+Z_{t-7}-Z_{t-8}+a_t-0.6659a_{t-1}-0.8147a_{t-7}+0.5425a_{t-8}
+\end{align}
+
+\vspace{-0.5cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm]{Weight SARIMA BIC Model}
+	\caption{R Code For Weight Data Model Coefficients}
+	\label{Weight SARIMA BIC}
+\end{figure}
+
+
+The best model in terms of AIC was a SARIMA(2,1,1)(1,1,4). Our model is (where $a_t \sim N(0, 1.085)$):
+
+\vspace{-0.5cm}
+\begin{align}
+	\pi(B)\Pi(B^s)(1-B)^d(1-B^s)^DZ_t=\psi(B)\Psi(B^s)a_t\\
+	(1+0.2680B+0.2111B^2)(1-0.7620B^7)(1-B)(1-B^7)Z_t\approx\\(1 - 0.9142B)(1 - 0.0006B^7 - 0.6255B^{14} - 0.1021B^{21} - 0.2686B^{28})a_t
+\end{align}
+
+\vspace{-0.5cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm]{Weight SARIMA AIC Model}
+	\caption{R Code For Weight Data Model Coefficients}
+	\label{Weight SARIMA AIC}
+\end{figure}
+
+
+
+
+
+
+\newpage
+\section{Forecasting}
+\label{section.forecasting}
+
+With our top models in hand, we try to forecast our series. We forecast our series out a month, and compare it to our test data that we reserved from the outset.  The forecast can be done automatically with R using the \texttt{forecast()} function. 
+\vspace{\baselineskip}
+
+The results for the weight data are shown in Figure \ref{Weight Forecast} below. The red shading refers to the 95\% Prediction Interval for the SARIMA(2,1,1)(1,1,4)7 model while the blue shading refers to the 95\% Prediction Interval for the SARIMA(0,1,1)(0,1,1)7 model.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm]{Weight Forecast}
+	\caption{Comparison Of Predicted And Observed Values For Weight Data}
+	\label{Weight Forecast}
+\end{figure}
+
+While an argument could have been made that the more comprehensive model favored by AIC overfits to the training data, it actually does a better job at forecasting our test data compared to the more parsimonious model we suggested (out of sample RMSE of 0.95 compared to out of sample RMSE of 1.73). In either case, see how the prediction bounds grow the larger we move from observed data. This is only natural-- our uncertainty about the future grows based on the time.
+\vspace{\baselineskip}
+
+Since the recommended model for the heart rate data was an AR(1), the forecast will be mean-reverting; the second term in out model $Z_t \approx 55.3846+0.3086(Z_{t-1}-55.3846)+a_t$ becomes smaller   and smaller. Our forecasts are:
+
+\vspace{-0.5cm}
+\begin{align*}
+	\widehat{Z_{169}}(1) &=55.38462+0.3086(59-55.38462)\approx56.500\\
+	\widehat{Z_{169}}(2) &=55.38462+0.3086(56.500-55.38462)\approx 55.729\\
+	\widehat{Z_{169}}(3) &=55.38462+0.3086(55.729-55.38462)\approx 55.491\\
+	\vdots
+\end{align*}
+
+Indeed, after twelve units, our predictions stabilize up to the fifth decimal.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=12cm]{HR Forecast}
+	\label{HR Forecast}
+\end{figure}
+
+
+
+
+
+
+
+\newpage
+\section{Appendix}
+\label{section.appendix}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{R Code 1}
+\end{figure}
+\vspace{-1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{R Code 2}
+\end{figure}
+\vspace{-1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{R Code 3}
+\end{figure}
+\vspace{-1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{R Code 4}
+\end{figure}
+\vspace{-1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{R Code 5}
+\end{figure}
+\vspace{-1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{R Code 6}
+\end{figure}
+\vspace{-1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{R Code 7}
+\end{figure}
+\vspace{-1cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=14cm]{R Code 8}
+\end{figure}
+
+
+
+
+
+\end{document}
